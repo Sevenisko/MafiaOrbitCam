@@ -98,7 +98,7 @@ public:
     int m_iUnk2;
     uint8_t pad3_0_7[24];
     void* m_pFakeShadow;
-    G_Inventory sInventory;
+    G_Inventory m_sInventory;
     I3D_frame* m_pWeaponR;
     I3D_frame* m_pWeaponL;
     I3D_frame* m_pGunR;

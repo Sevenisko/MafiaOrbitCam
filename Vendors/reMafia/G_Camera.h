@@ -11,10 +11,13 @@ public:
     C_human* m_pFollowedHuman;
     C_car* m_pFollowedCar;
     int m_iCameraState;
-    char pad2[20];
+    char pad2[68];
     bool m_bEnableSwing;
     float m_fSwingIntensity;
     I3D_frame* m_pSwingTargetFrame;
-    char pad3[48];
+    char pad3[36];
+    I3D_frame* m_pUnkFrame;
+    char pad4[2];
     bool m_bFreeLookEnabled;
+    float m_fSniperFOV;
 };

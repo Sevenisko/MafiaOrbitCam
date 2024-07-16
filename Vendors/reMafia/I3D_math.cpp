@@ -740,7 +740,7 @@ void __stdcall S_quat::Normalize()
 float gIdentityMatrix[] = { 1.0f, 0.0f, 0.0f, 0.0f,
 							0.0f, 1.0f, 0.0f, 0.0f,
 							0.0f, 0.0f, 1.0f, 0.0f,
-							0.0f, 0.0f, 0.0f, 0.0f };
+							0.0f, 0.0f, 0.0f, 1.0f };
 
 void __stdcall S_matrix::Identity()
 {

@@ -190,4 +190,6 @@ public:
     friend class C_debug;
 };
 
+constexpr int offset = offsetof(C_actor, m_vWorldDir);
+
 #pragma pack(pop)
