@@ -714,15 +714,6 @@ void __stdcall IGraph__Present_Hook(IGraph* pIGraph) {
             if (pHuman) {
                 sprintf(buf, "Player base: 0x%p", pHuman);
                 I3DGetDriver()->DrawText2D(0, 112, buf, 0, 1.0f);
-
-                S_matrix mat;
-                mat.Identity();
-
-                I3D_bsphere sphere;
-                sphere.pos    = pHuman->m_vShootTarget;
-                sphere.radius = 0.5f;
-
-                I3DGetDriver()->DrawSphere(mat, sphere, vColorRed, 0x00);
             }
         }
 
