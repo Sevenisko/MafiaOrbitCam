@@ -20,4 +20,12 @@ public:
     char pad4[2];
     bool m_bFreeLookEnabled;
     float m_fSniperFOV;
+
+    void SetSniperMode(bool bEnable) {
+        ((void(__thiscall*)(G_Camera*, bool))(0x5F4AB0))(this, bEnable);
+    }
+
+    void SetSniperFov(float fFov) {
+        ((void(__thiscall*)(G_Camera*, float))(0x5F4A70))(this, fFov);
+    }
 };

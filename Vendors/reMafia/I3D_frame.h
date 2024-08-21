@@ -131,6 +131,10 @@ public:
         return *(S_vector*)&m_mWorldMat.e[8];
     }
 
+    const S_vector& GetLocalDir() {
+        return *(S_vector*)&m_mLocalMat.e[8];
+    }
+
 	inline void SetScale(const S_vector& vScale) {
 		m_aScale = vScale;
 

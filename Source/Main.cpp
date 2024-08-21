@@ -1,15 +1,15 @@
-﻿#include <MinHook.h>
-#include <I3D_frame.h>
+﻿#include <Actors/C_car.h>
 #include <Actors/C_human.h>
-#include <Actors/C_car.h>
-#include <G_Camera.h>
-#include <g_collision.h>
-#include <cmath>
-#include <IGraph.h>
 #include <C_game.h>
 #include <C_mission.h>
+#include <G_Camera.h>
 #include <I3D_driver.h>
+#include <I3D_frame.h>
+#include <IGraph.h>
+#include <MinHook.h>
 #include <ModConfig.h>
+#include <cmath>
+#include <g_collision.h>
 
 #define M_PI 3.1415926535897931
 
@@ -33,22 +33,22 @@ typedef void(__thiscall* C_human__PersonAnim)(C_human*, float, int, float);
 typedef void(__thiscall* C_game__PauseAllSounds)(C_game*, bool);
 typedef void(__thiscall* C_game__NewExplosion)(C_game*, C_actor*, S_vector&, float, float, bool, bool, bool, int);
 
-G_Camera__Tick G_Camera__Tick_original = nullptr;
-G_Camera__SetCar G_Camera__SetCar_original = nullptr;
+G_Camera__Tick G_Camera__Tick_original           = nullptr;
+G_Camera__SetCar G_Camera__SetCar_original       = nullptr;
 G_Camera__SetPlayer G_Camera__SetPlayer_original = nullptr;
 C_game__Init C_game__Init_original               = nullptr;
-IGraph__Func IGraph__Present_original       = nullptr;
+IGraph__Func IGraph__Present_original            = nullptr;
 IGraph__Func IGraph__EndScene_original           = nullptr;
 
-C_human__Go_Func1 C_human__Go_FrontLeft_original = nullptr;
+C_human__Go_Func1 C_human__Go_FrontLeft_original  = nullptr;
 C_human__Go_Func1 C_human__Go_FrontRight_original = nullptr;
 C_human__Go_Func1 C_human__Go_Front_original      = nullptr;
 C_human__Go_Func2 C_human__Go_BackLeft_original   = nullptr;
-C_human__Go_Func2 C_human__Go_BackRight_original   = nullptr;
-C_human__Go_Func2 C_human__Go_Back_original   = nullptr;
-C_human__Go_Func1 C_human__Go_Left_original        = nullptr;
-C_human__Go_Func1 C_human__Go_Right_original        = nullptr;
-C_human__PersonAnim C_human__PersonAnim_original   = nullptr;
+C_human__Go_Func2 C_human__Go_BackRight_original  = nullptr;
+C_human__Go_Func2 C_human__Go_Back_original       = nullptr;
+C_human__Go_Func1 C_human__Go_Left_original       = nullptr;
+C_human__Go_Func1 C_human__Go_Right_original      = nullptr;
+C_human__PersonAnim C_human__PersonAnim_original  = nullptr;
 
 C_game__PauseAllSounds C_game__PauseAllSounds_original = nullptr;
 C_game__PauseAllSounds C_game__PlayAllSounds_original  = nullptr;
@@ -73,6 +73,7 @@ float g_fTargetShakeIntensity = 0, g_fCurShakeIntensity = g_fTargetShakeIntensit
 float g_fShakeIntensityX = 3.5f, g_fShakeIntensityY = 3.5f;
 float g_fShakeAngleX = 0, g_fShakeAngleY = 0;
 
+S_vector g_vCamOffset;
 S_vector g_vTargetPos, g_vCurPos;
 
 bool g_bFirstTime          = true;
@@ -115,8 +116,8 @@ void DebugPrintf(const char* str, ...) {
 #define Degrees(radians) radians * (180 / M_PI)
 
 double NormalizeAngle(double angle) {
-    while (angle < 0) angle += 360.0;
-    while (angle >= 360) angle -= 360.0;
+    while (angle < -360) angle = 0.0;
+    while (angle > 360) angle = 0.0;
     return angle;
 }
 
@@ -159,7 +160,7 @@ S_vector EulerFromDir(const S_vector& vDir) {
 S_vector DirFromEuler(const S_vector& vEuler) {
     S_vector vDir;
 
-    float yawRad = Radians(vEuler.x);
+    float yawRad   = Radians(vEuler.x);
     float pitchRad = Radians(vEuler.y);
 
     vDir.x = cosf(pitchRad) * sinf(yawRad);
@@ -206,10 +207,10 @@ void __fastcall G_Camera__SetCar_Hook(G_Camera* _this, DWORD edx, C_car* pCar) {
 
     if (pCar) {
         S_vector vCarPos(pCar->m_sVehicle.m_vPosition), vCenter(vCarPos.x, vCarPos.y + 1.85f, vCarPos.z), vPos, vDir;
-        g_fDistance        = 5.0f;
+        g_fDistance           = 5.0f;
         g_fInterpolationSpeed = 8.5f;
-        g_bIsInterpolating = true;
-        g_vTargetPos = vCenter;
+        g_bIsInterpolating    = true;
+        g_vTargetPos          = vCenter;
     } else if (_this->m_pFollowedHuman) {
         S_vector vHumanPos(_this->m_pFollowedHuman->GetPos()), vCenter(vHumanPos.x, vHumanPos.y + 1.5f, vHumanPos.z), vPos, vDir;
 
@@ -228,8 +229,8 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
     if (!g_bIsPaused) {
         g_fCurShakeIntensity = Lerpf(g_fCurShakeIntensity, g_fTargetShakeIntensity, 4.5f * float(uTickTime / 1000.0f));
 
-        g_fShakeAngleX += g_fShakeIntensityX * float(uTickTime / 1000.0f);
-        g_fShakeAngleY += g_fShakeIntensityY * float(uTickTime / 1000.0f);
+        g_fShakeAngleX += (g_fShakeIntensityX) * float(uTickTime / 1000.0f);
+        g_fShakeAngleY += (g_fShakeIntensityY) * float(uTickTime / 1000.0f);
 
         if (g_fShakeAngleX > 360)
             g_fShakeAngleX = 0;
@@ -247,10 +248,21 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
             if (_this->m_pFollowedCar) {
                 S_vector vEuler = EulerFromDir(_this->m_pFollowedCar->GetDir());
 
+                S_vector vCarPos   = _this->m_pFollowedCar->m_vWorldPos;
+                g_vTargetPos       = { vCarPos.x, vCarPos.y + 1.85f, vCarPos.z };
+                g_vCurPos          = g_vTargetPos;
+                g_bIsInterpolating = false;
+
                 g_fRotX = vEuler.x + 180.0f;
                 g_fRotY = vEuler.y + 12.5f;
             } else if (_this->m_pFollowedHuman) {
                 S_vector vEuler = EulerFromDir(_this->m_pFollowedHuman->GetDir());
+
+                S_vector vHumanPos = _this->m_pFollowedHuman->m_vWorldPos;
+
+                g_vTargetPos       = { vHumanPos.x, vHumanPos.y + 1.5f, vHumanPos.z };
+                g_vCurPos          = g_vTargetPos;
+                g_bIsInterpolating = false;
 
                 g_fDistance = 2.0f;
 
@@ -291,8 +303,8 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
             g_fFrontFaceCurTime   = 0.0f;
         }
 
-        g_fRotX += ((iMouseX * g_pModConfig->fMouseSensitivity) * (g_pModConfig->bInvertMouseX ? -1 : 1));
-        g_fRotY += ((iMouseY * g_pModConfig->fMouseSensitivity) * (g_pModConfig->bInvertMouseY ? -1 : 1));
+        g_fRotX += ((iMouseX * (_this->m_iCameraState != 5 ? g_pModConfig->fMouseSensitivity : g_pModConfig->fSniperMouseSensitivity)) * (g_pModConfig->bInvertMouseX ? -1 : 1));
+        g_fRotY += ((iMouseY * (_this->m_iCameraState != 5 ? g_pModConfig->fMouseSensitivity : g_pModConfig->fSniperMouseSensitivity)) * (g_pModConfig->bInvertMouseY ? -1 : 1));
 
         /*g_fDistance -= pIGraph->Mouse_rz() * 0.005f;
 
@@ -393,8 +405,37 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
             S_vector vDir = DirFromEuler({ g_fRotX, -g_fRotY, 0 });
 
             _this->m_pCameraFrame->SetWorldDir(vDir, 0);
+            _this->m_pCameraFrame->Update();
+        } else if (pHuman && _this->m_iCameraState == 23) {
+            // G_Camera__Tick_original(_this, uTickTime);
 
-            //G_Camera__Tick_original(_this, uTickTime);
+            g_fTargetHumanRot = g_fRotX;
+
+            S_vector vHumanRot = EulerFromDir(pHuman->GetFrame()->GetLocalDir());
+
+            pHuman->m_vWorldDir = DirFromEuler({ g_fTargetHumanRot, 0, 0 });
+
+            pHuman->GetFrame()->SetDir(pHuman->m_vWorldDir, 0);
+
+            S_vector vHumanPos(pHuman->GetFrame()->GetWorldPos()), vPos, vDir, vRightDir;
+
+            vHumanRot = EulerFromDir(pHuman->GetFrame()->GetWorldDir());
+
+            vDir = DirFromEuler({ vHumanRot.x + 15.0f, -g_fRotY, 0 });
+
+            vRightDir = vDir.Cross({ 0, 1, 0 });
+
+            vPos = { vHumanPos.x - (vRightDir.x * 0.3f) - (vDir.x * 0.75f), vHumanPos.y + (g_fHumanYCrouchOffset) - (vDir.y * 0.75f), vHumanPos.z - (vRightDir.z * 0.3f) - (vDir.z * 0.75f) };
+
+            if (g_fRotY >= 45.0f)
+                g_fRotY = 45.0f;
+
+            if (g_fRotY <= -45.0f)
+                g_fRotY = -45.0f;
+
+            _this->m_pCameraFrame->SetWorldPos(vPos);
+            _this->m_pCameraFrame->SetWorldDir(vDir, 0);
+            _this->m_pCameraFrame->Update();
         } else if (pHuman && bIsPlayerCameraMode) {
             uint32_t uMouseButtons = pIGraph->GetMouseButtons();
 
@@ -413,40 +454,62 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
 
                 S_vector vHumanPos(pHuman->GetPos()), vPos, vDir, vRightDir;
 
-                vDir = DirFromEuler({ g_fTargetHumanRot, -g_fRotY, 0 });
+                if (pHuman->m_sInventory.sSelectedItem.iItemID == 14) {
+                    if (_this->m_iCameraState != 5) {
+                        _this->SetSniperMode(true);
+                        _this->SetSniperFov(0.12f);
+                    }
+                    g_fShakeIntensityX = 0.25f;
+                    g_fShakeIntensityY = 0.45f;
 
-                vRightDir = vDir.Cross({ 0, 1, 0 });
+                    vDir = DirFromEuler({ g_fTargetHumanRot + (g_fOffsetRotX * 0.45f), -g_fRotY + (g_fOffsetRotY * 0.25f), 0 });
 
-                g_fHumanYCurOffset = Lerpf(g_fHumanYCurOffset, pHuman->m_bIsCrouching ? g_fHumanYCrouchOffset : g_fHumanYStandOffset, 4.5f * float(uTickTime / 1000.0f));
+                    vPos = { vHumanPos.x + (vDir.x * 1.75f), vHumanPos.y + (g_fHumanYCurOffset) + (vDir.y * 1.75f), vHumanPos.z + (vDir.z * 1.75f) };
 
-                vPos = { vHumanPos.x - (vRightDir.x * 0.3f) - (vDir.x * 0.75f), vHumanPos.y + (g_fHumanYCurOffset) - (vDir.y * 0.75f), vHumanPos.z - (vRightDir.z * 0.3f) - (vDir.z * 0.75f) };
-
-                if (g_fRotY >= 45.0f)
-                    g_fRotY = 45.0f;
-
-                if (g_fRotY <= -45.0f)
-                    g_fRotY = -45.0f;
-
-                S_vector vRaycastPos, vRaycastNormal;
-
-                g_pCollisionManager->TestLineV(vPos + (vDir * g_fDistance), (vDir * -(g_fDistance + 0.25f)), &vRaycastPos, &vRaycastNormal, 0xFFFFFFFF, 0);
-
-                S_vector finalPos { 0, 0, 0 };
-
-                if (vRaycastPos.Magnitude() > 0) {
-                    finalPos += vRaycastPos + (vDir * 0.02f);
-                }
-
-                if (finalPos.Magnitude() == 0) {
                     _this->m_pCameraFrame->SetWorldPos(vPos);
                 } else {
-                    _this->m_pCameraFrame->SetWorldPos(finalPos);
+                    g_fShakeIntensityX = 1.25f;
+                    g_fShakeIntensityY = 1.45f;
+
+                    vDir = DirFromEuler({ g_fTargetHumanRot + (g_fOffsetRotX * 1.25f), -g_fRotY + (g_fOffsetRotY * 1.25f), 0 });
+
+                    vRightDir = vDir.Cross({ 0, 1, 0 });
+
+                    g_fHumanYCurOffset = Lerpf(g_fHumanYCurOffset, pHuman->m_bIsCrouching ? g_fHumanYCrouchOffset : g_fHumanYStandOffset, 4.5f * float(uTickTime / 1000.0f));
+
+                    vPos = { vHumanPos.x - (vRightDir.x * 0.3f) - (_this->m_iCameraState != 5 ? (vDir.x * 0.75f) : 0), vHumanPos.y + (g_fHumanYCurOffset) - (vDir.y * 0.75f), vHumanPos.z - (vRightDir.z * 0.3f) - (vDir.z * 0.75f) };
+
+                    if (g_fRotY >= 45.0f)
+                        g_fRotY = 45.0f;
+
+                    if (g_fRotY <= -45.0f)
+                        g_fRotY = -45.0f;
+
+                    S_vector vRaycastPos, vRaycastNormal;
+
+                    g_pCollisionManager->TestLineV(vPos + (vDir * 0.75f), (vDir * -0.85f), &vRaycastPos, &vRaycastNormal, 0x80002u, 0x800000u);
+
+                    S_vector finalPos { 0, 0, 0 };
+
+                    if (vRaycastPos.Magnitude() > 0) {
+                        finalPos += vRaycastPos + (vRaycastNormal * 0.035f);
+                    }
+
+                    if (finalPos.Magnitude() == 0) {
+                        _this->m_pCameraFrame->SetWorldPos(vPos);
+                    } else {
+                        _this->m_pCameraFrame->SetWorldPos(finalPos);
+                    }
                 }
 
                 _this->m_pCameraFrame->SetWorldDir(vDir, 0);
                 _this->m_pCameraFrame->Update();
             } else {
                 S_vector vHumanPos(pHuman->GetPos()), vCenter, vPos, vDir;
+
+                if (_this->m_iCameraState == 5) {
+                    _this->SetSniperMode(false);
+                }
 
                 g_fHumanYCurOffset = Lerpf(g_fHumanYCurOffset, pHuman->m_bIsCrouching ? g_fHumanYCrouchOffset : g_fHumanYStandOffset, 4.5f * float(uTickTime / 1000.0f));
 
@@ -466,12 +529,12 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
 
                     S_vector vRaycastPos, vRaycastNormal;
 
-                    g_pCollisionManager->TestLineV(vPos + (vDir * g_fDistance), (vDir * -(g_fDistance + 0.25f)), &vRaycastPos, &vRaycastNormal, 0xFFFFFFFF, 0);
+                    g_pCollisionManager->TestLineV(vPos + (vDir * g_fDistance), (vDir * -(g_fDistance + 0.25f)), &vRaycastPos, &vRaycastNormal, 0x80002u, 0x800000u);
 
                     S_vector finalPos { 0, 0, 0 };
 
                     if (vRaycastPos.Magnitude() > 0) {
-                        finalPos += vRaycastPos + (vRaycastNormal * 0.02f);
+                        finalPos += vRaycastPos + (vRaycastNormal * 0.035f);
                     }
 
                     if (finalPos.Magnitude() == 0) {
@@ -482,7 +545,7 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
 
                     _this->m_pCameraFrame->SetWorldDir(vDir, 0);
                     _this->m_pCameraFrame->Update();
-            }
+                }
             }
         } else {
             G_Camera__Tick_original(_this, uTickTime);
@@ -510,14 +573,12 @@ void __fastcall C_game__PlayAllSounds_Hook(C_game* _this, DWORD edx, bool a2) {
 }
 
 void __fastcall C_game__NewExplosion_Hook(C_game* _this, DWORD edx, C_actor* pActor, S_vector& vOrigin, float fRange, float fDamage, bool a6, bool bCreateParticle, bool a8, int iSoundId) {
-    
-
     C_game__NewExplosion_original(_this, pActor, vOrigin, fRange, fDamage, a6, bCreateParticle, a8, iSoundId);
 }
 
 void __fastcall C_human__PersonAnim_Hook(C_human* _this, DWORD edx, float a2, int a3, float a4) {
     C_human* pHuman = g_pMission->m_pGame->m_pHuman;
-    
+
     if (_this == pHuman) {
         if (g_bIsAiming) {
             pHuman->m_bIsAiming = true;
@@ -579,9 +640,9 @@ void __fastcall C_human__PersonAnim_Hook(C_human* _this, DWORD edx, float a2, in
 }
 
 void __fastcall C_human__Go_FrontLeft_Hook(C_human* _this, DWORD edx, bool a2) {
-    if (g_bIsAiming) {
+    if (_this == g_pMission->m_pGame->m_pHuman && g_bIsAiming) {
         C_human__Go_FrontLeft_original(_this, false);
-    } else if (_this == g_pMission->m_pGame->m_pHuman && g_pMission->m_pGame->m_eCamera.m_iCameraState != 17) {
+    } else if (_this == g_pMission->m_pGame->m_pHuman && (g_pMission->m_pGame->m_eCamera.m_iCameraState != 17 && g_pMission->m_pGame->m_eCamera.m_iCameraState != 23)) {
         g_fTargetHumanRot = (g_fRotX - 180.0f) - 45.0f;
 
         C_human__Go_Front_original(_this, true);
@@ -591,9 +652,9 @@ void __fastcall C_human__Go_FrontLeft_Hook(C_human* _this, DWORD edx, bool a2) {
 }
 
 void __fastcall C_human__Go_FrontRight_Hook(C_human* _this, DWORD edx, bool a2) {
-    if (g_bIsAiming) {
+    if (_this == g_pMission->m_pGame->m_pHuman && g_bIsAiming) {
         C_human__Go_FrontRight_original(_this, false);
-    } else if (_this == g_pMission->m_pGame->m_pHuman && g_pMission->m_pGame->m_eCamera.m_iCameraState != 17) {
+    } else if (_this == g_pMission->m_pGame->m_pHuman && (g_pMission->m_pGame->m_eCamera.m_iCameraState != 17 && g_pMission->m_pGame->m_eCamera.m_iCameraState != 23)) {
         g_fTargetHumanRot = (g_fRotX - 180.0f) + 45.0f;
 
         C_human__Go_Front_original(_this, true);
@@ -603,9 +664,9 @@ void __fastcall C_human__Go_FrontRight_Hook(C_human* _this, DWORD edx, bool a2) 
 }
 
 void __fastcall C_human__Go_Front_Hook(C_human* _this, DWORD edx, bool a2) {
-    if (g_bIsAiming) {
+    if (_this == g_pMission->m_pGame->m_pHuman && g_bIsAiming) {
         C_human__Go_Front_original(_this, false);
-    } else if (_this == g_pMission->m_pGame->m_pHuman && g_pMission->m_pGame->m_eCamera.m_iCameraState != 17) {
+    } else if (_this == g_pMission->m_pGame->m_pHuman && (g_pMission->m_pGame->m_eCamera.m_iCameraState != 17 && g_pMission->m_pGame->m_eCamera.m_iCameraState != 23)) {
         g_fTargetHumanRot = (g_fRotX - 180.0f);
 
         C_human__Go_Front_original(_this, true);
@@ -615,9 +676,9 @@ void __fastcall C_human__Go_Front_Hook(C_human* _this, DWORD edx, bool a2) {
 }
 
 void __fastcall C_human__Go_BackLeft_Hook(C_human* _this, DWORD edx) {
-    if (g_bIsAiming) {
+    if (_this == g_pMission->m_pGame->m_pHuman && g_bIsAiming) {
         C_human__Go_BackLeft_original(_this);
-    } else if (_this == g_pMission->m_pGame->m_pHuman && g_pMission->m_pGame->m_eCamera.m_iCameraState != 17) {
+    } else if (_this == g_pMission->m_pGame->m_pHuman && (g_pMission->m_pGame->m_eCamera.m_iCameraState != 17 && g_pMission->m_pGame->m_eCamera.m_iCameraState != 23)) {
         g_fTargetHumanRot = (g_fRotX - 180.0f) + 180.0f + 45.0f;
 
         C_human__Go_Front_original(_this, true);
@@ -627,9 +688,9 @@ void __fastcall C_human__Go_BackLeft_Hook(C_human* _this, DWORD edx) {
 }
 
 void __fastcall C_human__Go_BackRight_Hook(C_human* _this, DWORD edx) {
-    if (g_bIsAiming) {
+    if (_this == g_pMission->m_pGame->m_pHuman && g_bIsAiming) {
         C_human__Go_BackRight_original(_this);
-    } else if (_this == g_pMission->m_pGame->m_pHuman && g_pMission->m_pGame->m_eCamera.m_iCameraState != 17) {
+    } else if (_this == g_pMission->m_pGame->m_pHuman && (g_pMission->m_pGame->m_eCamera.m_iCameraState != 17 && g_pMission->m_pGame->m_eCamera.m_iCameraState != 23)) {
         g_fTargetHumanRot = (g_fRotX - 180.0f) + 180.0f - 45.0f;
 
         C_human__Go_Front_original(_this, true);
@@ -639,9 +700,9 @@ void __fastcall C_human__Go_BackRight_Hook(C_human* _this, DWORD edx) {
 }
 
 void __fastcall C_human__Go_Back_Hook(C_human* _this, DWORD edx) {
-    if (g_bIsAiming) {
+    if (_this == g_pMission->m_pGame->m_pHuman && g_bIsAiming) {
         C_human__Go_Back_original(_this);
-    } else if (_this == g_pMission->m_pGame->m_pHuman && g_pMission->m_pGame->m_eCamera.m_iCameraState != 17) {
+    } else if (_this == g_pMission->m_pGame->m_pHuman && (g_pMission->m_pGame->m_eCamera.m_iCameraState != 17 && g_pMission->m_pGame->m_eCamera.m_iCameraState != 23)) {
         g_fTargetHumanRot = (g_fRotX - 180.0f) + 180.0f;
 
         C_human__Go_Front_original(_this, true);
@@ -651,9 +712,9 @@ void __fastcall C_human__Go_Back_Hook(C_human* _this, DWORD edx) {
 }
 
 void __fastcall C_human__Go_Left_Hook(C_human* _this, DWORD edx, bool a2) {
-    if (g_bIsAiming) {
+    if (_this == g_pMission->m_pGame->m_pHuman && g_bIsAiming) {
         C_human__Go_Left_original(_this, false);
-    } else if (_this == g_pMission->m_pGame->m_pHuman && g_pMission->m_pGame->m_eCamera.m_iCameraState != 17) {
+    } else if (_this == g_pMission->m_pGame->m_pHuman && (g_pMission->m_pGame->m_eCamera.m_iCameraState != 17 && g_pMission->m_pGame->m_eCamera.m_iCameraState != 23)) {
         g_fTargetHumanRot = (g_fRotX - 180.0f) - 90.0f;
 
         C_human__Go_Front_original(_this, true);
@@ -663,9 +724,9 @@ void __fastcall C_human__Go_Left_Hook(C_human* _this, DWORD edx, bool a2) {
 }
 
 void __fastcall C_human__Go_Right_Hook(C_human* _this, DWORD edx, bool a2) {
-    if (g_bIsAiming) {
+    if (_this == g_pMission->m_pGame->m_pHuman && g_bIsAiming) {
         C_human__Go_Right_original(_this, false);
-    } else if (_this == g_pMission->m_pGame->m_pHuman && g_pMission->m_pGame->m_eCamera.m_iCameraState != 17) {
+    } else if (_this == g_pMission->m_pGame->m_pHuman && (g_pMission->m_pGame->m_eCamera.m_iCameraState != 17 && g_pMission->m_pGame->m_eCamera.m_iCameraState != 23)) {
         g_fTargetHumanRot = (g_fRotX - 180.0f) + 90.0f;
 
         C_human__Go_Front_original(_this, true);
@@ -724,7 +785,7 @@ void __stdcall IGraph__Present_Hook(IGraph* pIGraph) {
 }
 
 void SetPlayerDir(C_human* pPlayer) {
-    //pPlayer->m_vWorldDir = DirFromEuler({ g_fRotX + 180.0f, 0, 0 });
+    // pPlayer->m_vWorldDir = DirFromEuler({ g_fRotX + 180.0f, 0, 0 });
 }
 
 void SetPlayerShootTarget(C_human* pPlayer) {
@@ -735,7 +796,7 @@ void SetPlayerShootTarget(C_human* pPlayer) {
     S_vector vRaycastPos, vRaycastNormal;
 
     g_pCollisionManager->TestLineV(vPos, vRelDest, &vRaycastPos, &vRaycastNormal, 1, 0x80000u);
-    //g_pCollisionManager->TestLineV(vPos + vDir * (g_fCurDistance * 1.45f), vRelDest, &vRaycastPos, &vRaycastNormal, 0xFFFFFFFF, 0);
+    // g_pCollisionManager->TestLineV(vPos + vDir * (g_fCurDistance * 1.45f), vRelDest, &vRaycastPos, &vRaycastNormal, 0xFFFFFFFF, 0);
 
     if (vRaycastPos.Magnitude() != 0) {
         pPlayer->m_vShootTarget = vRaycastPos;
@@ -764,11 +825,11 @@ __declspec(naked) void C_player__AI_drive_setShootDest() {
 }
 
 extern "C" __declspec(dllexport) void InitializeASI() {
-    #ifdef _DEBUG
+#ifdef _DEBUG
     while (!IsDebuggerPresent()) {
         MessageBoxA(NULL, "Waiting for the debugger, press OK once you've attached one.", "Bruv", MB_OK | MB_ICONINFORMATION);
     }
-    #endif
+#endif
 
     ls3df = GetModuleHandleA("LS3DF.dll");
 
@@ -796,7 +857,7 @@ extern "C" __declspec(dllexport) void InitializeASI() {
 
     uint32_t iVTableAddr = *(uint32_t*)pIGraph;
 
-    void* pAddrPresent = *(void**)(iVTableAddr + 60);
+    void* pAddrPresent  = *(void**)(iVTableAddr + 60);
     void* pAddrEndScene = *(void**)(iVTableAddr + 56);
 
     if (g_pModConfig->bEnableCamOrbit) {
@@ -816,7 +877,7 @@ extern "C" __declspec(dllexport) void InitializeASI() {
         MH_CreateHook((LPVOID)0x57D430, (LPVOID)&C_human__Go_Back_Hook, (LPVOID*)&C_human__Go_Back_original);
         MH_CreateHook((LPVOID)0x57D4D0, (LPVOID)&C_human__Go_Left_Hook, (LPVOID*)&C_human__Go_Left_original);
         MH_CreateHook((LPVOID)0x57D5A0, (LPVOID)&C_human__Go_Right_Hook, (LPVOID*)&C_human__Go_Right_original);
-        
+
         if (g_pModConfig->bEnableDebugStats) {
             MH_CreateHook(pAddrEndScene, (LPVOID)&IGraph__EndScene_Hook, (LPVOID*)&IGraph__EndScene_original);
             MH_CreateHook(pAddrPresent, (LPVOID)&IGraph__Present_Hook, (LPVOID*)&IGraph__Present_original);

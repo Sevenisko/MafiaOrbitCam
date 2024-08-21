@@ -2,10 +2,15 @@
 
 #include <Utils.hpp>
 #include <I3D_math.h>
+#include <fstream>
 
 class IniFile {
 public:
     struct IniValue {
+        operator bool() const {
+            return bIsValid;
+        }
+
         template<typename T>
         T Get() const;
 
