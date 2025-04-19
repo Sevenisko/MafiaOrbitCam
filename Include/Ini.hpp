@@ -7,35 +7,73 @@
 class IniFile {
 public:
     struct IniValue {
-        operator bool() const {
-            return bIsValid;
-        }
-
-        template<typename T>
-        T Get() const;
-
-        void SetName(const std::string& szName) {
-            this->szName = szName;
-        }
-
-        void Set(const std::string& szValue) {
-            this->szValue = szValue;
-        }
-
-        void Set(int iValue) {
+        void operator=(int iValue) {
             this->szValue = std::to_string(iValue);
+            bIsValid = true;
         }
 
-        void Set(float fValue) {
+        void operator=(float fValue) {
             this->szValue = std::to_string(fValue);
+            bIsValid      = true;
         }
 
-        void Set(bool bValue) {
+        void operator=(bool bValue) {
             this->szValue = bValue ? "true" : "false";
         }
 
-        void Set(const S_vector& vVec) {
+        void operator=(const std::string& szValue) {
+            this->szValue = szValue;
+        }
+
+        void operator=(const S_vector& vVec) {
             this->szValue = "{" + std::to_string(vVec.x) + ", " + std::to_string(vVec.y) + ", " + std::to_string(vVec.z) + "}";
+        }
+
+        operator int() const {
+            return std::stoi(szValue);
+        }
+
+        operator float() const {
+            return std::stof(szValue);
+        }
+
+        operator bool() const {
+            if (szValue == "true") {
+                return true;
+            }
+
+            return false;
+        }
+
+        operator std::string() const {
+            return szValue;
+        }
+
+        operator S_vector() const {
+            S_vector vec;
+            std::string str = szValue;
+
+            if (str.front() == '{') {
+                str.erase(str.begin());
+            }
+            if (str.back() == '}') {
+                str.pop_back();
+            }
+
+            str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
+
+            std::istringstream iss(str);
+            char delimiter;
+
+            if (!((iss >> vec.x >> delimiter) && (delimiter == ',') && (iss >> vec.y >> delimiter) && (delimiter == ',') && (iss >> vec.z))) {
+                vec = {};
+            }
+
+            return vec;
+        }
+
+        void SetName(const std::string& szName) {
+            this->szName = szName;
         }
 
         bool IsValid() const {
@@ -203,51 +241,3 @@ private:
     std::vc6_vector<IniSection> m_vSections;
     bool m_bIsValid = false;
 };
-
-template <>
-inline int IniFile::IniValue::Get<int>() const {
-    return std::stoi(szValue);
-}
-
-template <>
-inline float IniFile::IniValue::Get<float>() const {
-    return std::stof(szValue);
-}
-
-template <>
-inline bool IniFile::IniValue::Get<bool>() const {
-    if (szValue == "true") {
-        return true;
-    }
-
-    return false;
-}
-
-template <>
-inline std::string IniFile::IniValue::Get<std::string>() const {
-    return szValue;
-}
-
-template <>
-inline S_vector IniFile::IniValue::Get<S_vector>() const {
-    S_vector vec;
-    std::string str = szValue;
-
-    if (str.front() == '{') {
-        str.erase(str.begin());
-    }
-    if (str.back() == '}') {
-        str.pop_back();
-    }
-
-    str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
-
-    std::istringstream iss(str);
-    char delimiter;
-
-    if (!((iss >> vec.x >> delimiter) && (delimiter == ',') && (iss >> vec.y >> delimiter) && (delimiter == ',') && (iss >> vec.z))) {
-        vec = {};
-    }
-
-    return vec;
-}

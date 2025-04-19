@@ -10,30 +10,35 @@ struct ModConfig {
         IniFile ini(szFileName);
 
         if (ini.IsValid()) {
-            if (ini["#root"]["EnableMod"])
-                bEnableCamOrbit = ini["#root"]["EnableMod"].Get<bool>();
-            if (ini["#root"]["EnableDebugStats"])
-                bEnableDebugStats = ini["#root"]["EnableDebugStats"].Get<bool>();
+            if (ini["#root"].HasValue("EnableMod"))
+                bEnableCamOrbit = ini["#root"]["EnableMod"];
+            if (ini["#root"].HasValue("EnableDebugStats"))
+                bEnableDebugStats = ini["#root"]["EnableDebugStats"];
 
-            if (ini["Input"]["InvertMouseX"])
-                bInvertMouseX = ini["Input"]["InvertMouseX"].Get<bool>();
-            if (ini["Input"]["InvertMouseY"])
-                bInvertMouseY = ini["Input"]["InvertMouseY"].Get<bool>();
-            if (ini["Input"]["MouseSensitivity"])
-                fMouseSensitivity = ini["Input"]["MouseSensitivity"].Get<float>();
-            if (ini["Input"]["SniperMouseSensitivity"])
-                fSniperMouseSensitivity = ini["Input"]["SniperMouseSensitivity"].Get<float>();
+            if (ini["Input"].HasValue("InvertMouseX"))
+                bInvertMouseX = ini["Input"]["InvertMouseX"];
+            if (ini["Input"].HasValue("InvertMouseY"))
+                bInvertMouseY = ini["Input"]["InvertMouseY"];
+            if (ini["Input"].HasValue("MouseSensitivity"))
+                fMouseSensitivity = ini["Input"]["MouseSensitivity"];
+            if (ini["Input"].HasValue("SniperMouseSensitivity"))
+                fSniperMouseSensitivity = ini["Input"]["SniperMouseSensitivity"];
 
-            if (ini["Camera"]["Offset"])
-                vCameraOffset = ini["Camera"]["Offset"].Get<S_vector>();
+            if (ini["Camera"].HasValue("EnableInterpolation"))
+                bEnableCameraInterpolation = ini["Camera"]["EnableInterpolation"];
+            if (ini["Camera"].HasValue("EnableOnFoot"))
+                bEnableOnFootOrbitCam = ini["Camera"]["EnableOnFoot"];
+            if (ini["Camera"].HasValue("EnableInCar"))
+                bEnableInCarOrbitCam = ini["Camera"]["EnableInCar"];
+            if (ini["Camera"].HasValue("Offset"))
+                vCameraOffset = ini["Camera"]["Offset"];
 
-
-            if (ini["Vehicle"]["FrontFacingTime"])
-                fCarFrontFacingTime = ini["Vehicle"]["FrontFacingTime"].Get<float>();
-            if (ini["Vehicle"]["EnableRotationRoll"])
-                bEnableCarRotRoll = ini["Vehicle"]["EnableRotationRoll"].Get<bool>();
-            if (ini["Vehicle"]["RotationRollIntensity"])
-                fCarRotRollIntensity = ini["Vehicle"]["RotationRollIntensity"].Get<float>();
+            if (ini["Vehicle"].HasValue("FrontFacingTime"))
+                fCarFrontFacingTime = ini["Vehicle"]["FrontFacingTime"];
+            if (ini["Vehicle"].HasValue("EnableRotationRoll"))
+                bEnableCarRotRoll = ini["Vehicle"]["EnableRotationRoll"];
+            if (ini["Vehicle"].HasValue("RotationRollIntensity"))
+                fCarRotRollIntensity = ini["Vehicle"]["RotationRollIntensity"];
 
             m_bIsLoaded = true;
         }
@@ -46,19 +51,23 @@ struct ModConfig {
     void SaveConfig(const std::string& szFileName) {
         IniFile ini;
 
-        ini["#root"]["EnableMod"].Set(bEnableCamOrbit);
-        ini["#root"]["EnableDebugStats"].Set(bEnableDebugStats);
+        ini["#root"]["EnableMod"]        = bEnableCamOrbit;
+        ini["#root"]["EnableDebugStats"] = bEnableDebugStats;
 
-        ini["Input"]["InvertMouseX"].Set(bInvertMouseX);
-        ini["Input"]["InvertMouseY"].Set(bInvertMouseY);
-        ini["Input"]["MouseSensitivity"].Set(fMouseSensitivity);
-        ini["Input"]["SniperMouseSensitivity"].Set(fSniperMouseSensitivity);
+        ini["Input"]["InvertMouseX"]           = bInvertMouseX;
+        ini["Input"]["InvertMouseY"]           = bInvertMouseY;
+        ini["Input"]["MouseSensitivity"]       = fMouseSensitivity;
+        ini["Input"]["SniperMouseSensitivity"] = fSniperMouseSensitivity;
 
-        ini["Camera"]["Offset"].Set(vCameraOffset);
+        ini["Camera"]["EnableInterpolation"] = bEnableCameraInterpolation;
+        ini["Camera"]["EnableOnFoot"] = bEnableOnFootOrbitCam;
+        ini["Camera"]["EnableInCar"] = bEnableInCarOrbitCam;
+        ini["Camera"]["EnableInterpolation"] = bEnableCameraInterpolation;
+        ini["Camera"]["Offset"]              = vCameraOffset;
 
-        ini["Vehicle"]["FrontFacingTime"].Set(fCarFrontFacingTime);
-        ini["Vehicle"]["EnableRotationRoll"].Set(bEnableCarRotRoll);
-        ini["Vehicle"]["RotationRollIntensity"].Set(fCarRotRollIntensity);
+        ini["Vehicle"]["FrontFacingTime"]       = fCarFrontFacingTime;
+        ini["Vehicle"]["EnableRotationRoll"]    = bEnableCarRotRoll;
+        ini["Vehicle"]["RotationRollIntensity"] = fCarRotRollIntensity;
 
         ini.Write(szFileName);
     }
@@ -71,7 +80,10 @@ struct ModConfig {
     float fMouseSensitivity       = 0.1f;
     float fSniperMouseSensitivity = 0.025f;
 
-    S_vector vCameraOffset = { 0, 0, 0 };
+    bool bEnableCameraInterpolation = true;
+    bool bEnableOnFootOrbitCam = true;
+    bool bEnableInCarOrbitCam = true;
+    S_vector vCameraOffset          = { 0, 0, 0 };
 
     float fCarFrontFacingTime  = 1.5f;
     bool bEnableCarRotRoll     = false;
