@@ -801,7 +801,9 @@ void __fastcall C_player__AI_walk_Hook(C_player* _this, DWORD edx, int a2, int a
 void __fastcall G_Inventory__Vystrel_Hook(G_Inventory* _this, DWORD edx) {
     G_Inventory__Vystrel_original(_this);
 
-    ApplyWeaponKick(_this->sSelectedItem.iItemID);
+    if (_this == &g_pMission->m_pGame->m_pHuman->m_sInventory) {
+        ApplyWeaponKick(_this->sSelectedItem.iItemID);
+    }
 }
 
 bool __fastcall C_game__Init_Hook(C_game* _this, DWORD edx) {
