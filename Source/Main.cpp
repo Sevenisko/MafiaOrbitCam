@@ -37,10 +37,10 @@ typedef void(__thiscall* C_player__AI_walk)(C_player*, int, int, float*);
 typedef void(__thiscall* G_Inventory__Vystrel)(G_Inventory*);
 typedef void(__cdecl* CloseSystem)();
 
-G_Camera__Tick G_Camera__Tick_original           = nullptr;
-G_Camera__SetCar G_Camera__SetCar_original       = nullptr;
-C_game__Init C_game__Init_original               = nullptr;
-IGraph__Present IGraph__Present_original            = nullptr;
+G_Camera__Tick G_Camera__Tick_original     = nullptr;
+G_Camera__SetCar G_Camera__SetCar_original = nullptr;
+C_game__Init C_game__Init_original         = nullptr;
+IGraph__Present IGraph__Present_original   = nullptr;
 
 C_human__Go_Func1 C_human__Go_FrontLeft_original  = nullptr;
 C_human__Go_Func1 C_human__Go_FrontRight_original = nullptr;
@@ -89,9 +89,9 @@ float g_ExplosionShakeIntensity = 0.0f;
 float g_ExplodeAngleX = 0, g_ExplodeAngleY = 35.0f;
 float g_ExplodeOffsetRotX = 0, g_ExplodeOffsetRotY = 0;
 
-float g_WeaponKickIntensity     = 0.0f;
-float g_WeaponKickDuration      = 0.0f;
-float g_WeaponKickCurDuration   = 0.0f;
+float g_WeaponKickIntensity   = 0.0f;
+float g_WeaponKickDuration    = 0.0f;
+float g_WeaponKickCurDuration = 0.0f;
 
 S_vector g_CamOffset;
 S_vector g_TargetPos, g_CurPos;
@@ -112,8 +112,8 @@ bool g_RMBPreviousState = false;
 bool g_RMBWasPressed    = false;
 bool g_RMBWasReleased   = false;
 
-bool g_CurAimState = false;
-bool g_PrevAimState = false;
+bool g_CurAimState   = false;
+bool g_PrevAimState  = false;
 bool g_StartedAiming = false;
 bool g_StoppedAiming = false;
 
@@ -184,7 +184,7 @@ S_vector EulerFromDir(const S_vector& dir) {
     S_vector euler;
 
     float hyp = sqrtf(dir.x * dir.x + dir.z * dir.z);
-    euler.y  = Degrees(atan2f(-dir.y, hyp));
+    euler.y   = Degrees(atan2f(-dir.y, hyp));
 
     euler.x = Degrees(atan2f(dir.x, dir.z));
 
@@ -305,7 +305,7 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
             g_WeaponKickCurDuration += deltaTime;
 
             if (g_WeaponKickCurDuration >= g_WeaponKickDuration) {
-                g_WeaponKickDuration = 0;
+                g_WeaponKickDuration    = 0;
                 g_WeaponKickCurDuration = 0;
                 g_ShootTargetOffsetRotX = 0;
                 g_ShootTargetOffsetRotY = 0;
@@ -330,8 +330,8 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
                 g_ExplosionShakeIntensity = 0;
         }
 
-        g_ExplodeAngleX += (g_ExplosionShakeIntensity * 48.0f)*deltaTime;
-        g_ExplodeAngleY += (g_ExplosionShakeIntensity * 48.0f)*deltaTime;
+        g_ExplodeAngleX += (g_ExplosionShakeIntensity * 48.0f) * deltaTime;
+        g_ExplodeAngleY += (g_ExplosionShakeIntensity * 48.0f) * deltaTime;
 
         if (g_ExplodeAngleX > 360)
             g_ExplodeAngleX = 0;
@@ -359,7 +359,7 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
             if (pCar) {
                 S_vector vEuler = EulerFromDir(pCar->GetDir());
 
-                S_vector vCarPos   = pCar->m_vWorldPos;
+                S_vector vCarPos  = pCar->m_vWorldPos;
                 g_TargetPos       = { vCarPos.x, vCarPos.y + 1.85f, vCarPos.z };
                 g_CurPos          = g_TargetPos;
                 g_IsInterpolating = false;
@@ -407,7 +407,7 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
             g_IsInterpolatingRot = false;
             g_FrontFaceCurTime   = 0.0f;
         }
-        
+
         g_RotX += ((iMouseX * (_this->m_iCameraState != 5 ? g_ModConfig->fMouseSensitivity : g_ModConfig->fSniperMouseSensitivity)) * (g_ModConfig->bInvertMouseX ? -1 : 1));
         g_RotY += ((iMouseY * (_this->m_iCameraState != 5 ? g_ModConfig->fMouseSensitivity : g_ModConfig->fSniperMouseSensitivity)) * (g_ModConfig->bInvertMouseY ? -1 : 1));
 
@@ -422,8 +422,8 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
             g_StoppedAiming = g_PrevAimState && !g_CurAimState;
         }
 
-        g_CurPos      = LerpVec(g_CurPos, g_TargetPos, (g_InterpolationSpeed) * deltaTime);
-        g_CurDistance = Lerpf(g_CurDistance, g_Distance, (g_InterpolationSpeed) * deltaTime);
+        g_CurPos      = LerpVec(g_CurPos, g_TargetPos, (g_InterpolationSpeed)*deltaTime);
+        g_CurDistance = Lerpf(g_CurDistance, g_Distance, (g_InterpolationSpeed)*deltaTime);
 
         if ((g_TargetPos - g_CurPos).Magnitude() <= 0.15f) {
             g_IsInterpolating = false;
@@ -575,7 +575,7 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
             if (g_RotY >= 45.0f)
                 g_RotY = 45.0f;
 
-            if (g_RotY <= -45.0f)
+            if (g_RotY <= -35.0f)
                 g_RotY = -45.0f;
 
             _this->m_pCameraFrame->SetWorldPos(vPos);
@@ -616,7 +616,7 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
                 if (!g_IsInterpolating && (g_TargetPos - g_CurPos).Magnitude() > 0.15f && g_ModConfig->bEnableCameraInterpolation) {
                     g_CurPos             = _this->m_pCameraFrame->GetWorldPos();
                     g_InterpolationSpeed = 26.5f;
-                    g_IsInterpolating = true;
+                    g_IsInterpolating    = true;
                 }
             } else if (g_RMBWasReleased) {
                 g_RMBWasReleased = false;
@@ -652,7 +652,7 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
                 if (!g_IsInterpolating && (g_TargetPos - g_CurPos).Magnitude() > 0.15f && g_ModConfig->bEnableCameraInterpolation) {
                     g_CurPos             = _this->m_pCameraFrame->GetWorldPos();
                     g_InterpolationSpeed = 26.5f;
-                    g_IsInterpolating = true;
+                    g_IsInterpolating    = true;
                 }
             }
 
@@ -743,6 +743,12 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
 
                 vCenter = { vHumanPos.x, vHumanPos.y + g_HumanYCurOffset, vHumanPos.z };
 
+                if (g_RotY >= 40.0f)
+                    g_RotY = 40.0f;
+
+                if (g_RotY <= -40.0f)
+                    g_RotY = -40.0f;
+
                 CalcOrbit(vCenter, { 1, 0, 0 }, vPos, vDir, g_Distance, g_RotX, g_RotY);
 
                 S_vector vEuler = EulerFromDir(vDir);
@@ -793,7 +799,7 @@ void __fastcall G_Camera__Tick_Hook(G_Camera* _this, DWORD edx, uint32_t uTickTi
 }
 
 void __fastcall C_player__AI_walk_Hook(C_player* _this, DWORD edx, int a2, int a3, float* a4) {
-    g_IsRunning = *(bool*)(((int)_this) + sizeof(C_human) + 0x3C);
+    g_IsRunning = !(*(bool*)(((int)_this) + 0xAD9));
 
     C_player__AI_walk_original(_this, a2, a3, a4);
 }
@@ -831,11 +837,11 @@ void __fastcall C_game__NewExplosion_Hook(C_game* _this, DWORD edx, C_actor* pAc
     C_game__NewExplosion_original(_this, pActor, vOrigin, fRange, fDamage, a6, bCreateParticle, a8, iSoundId);
 
     if (_this->m_pHuman) {
-        S_vector vHumanPos = _this->m_pHuman->GetPos();
-        float distance     = (vOrigin - vHumanPos).Magnitude();
+        S_vector vHumanPos  = _this->m_pHuman->GetPos();
+        float distance      = (vOrigin - vHumanPos).Magnitude();
         float modifiedRange = (fRange * 3.5f);
         if (distance < modifiedRange) {
-            float intensity            = 1.0f - (distance / modifiedRange);
+            float intensity           = 1.0f - (distance / modifiedRange);
             g_ExplosionShakeIntensity = intensity;
         }
     }
